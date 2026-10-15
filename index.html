@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Beat the Clock: Returns Race</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EFEDF3; --surface:#FFFFFF; --ink:#1E1A2B; --muted:#62597A; --line:#D6D0E2;
+  --brand:#510C76; --brand-ink:#FFFFFF; --brand-soft:#EFE5F6;
+  --tape:#F2C230; --tape-ink:#2A2100; --good:#2F7D32; --good-soft:#E3F2E1; --bad:#B3261E; --bad-soft:#FBE4E2;
+  --shadow:0 1px 0 rgba(30,26,43,.06);
+  color-scheme:light;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#17141F; --surface:#221E2D; --ink:#F1EEF7; --muted:#ABA2C2; --line:#3A3448;
+  --brand:#B98BDB; --brand-ink:#1A0F24; --brand-soft:#2E2340;
+  --tape:#E9B923; --tape-ink:#211A00; --good:#7BC67E; --good-soft:#1E3220; --bad:#F2918A; --bad-soft:#3A1F1E; color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#17141F; --surface:#221E2D; --ink:#F1EEF7; --muted:#ABA2C2; --line:#3A3448;
+  --brand:#B98BDB; --brand-ink:#1A0F24; --brand-soft:#2E2340;
+  --tape:#E9B923; --tape-ink:#211A00; --good:#7BC67E; --good-soft:#1E3220; --bad:#F2918A; --bad-soft:#3A1F1E; color-scheme:dark;}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 "Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+h1,h2,h3,.cond{font-family:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;letter-spacing:.01em}
+h1{font-size:2.4rem;line-height:1;margin:0 0 .4rem;font-weight:800}
+h2{font-size:1.6rem;line-height:1.05;margin:0 0 .5rem;font-weight:800}
+h3{font-size:1.2rem;margin:0;font-weight:700}
+p{margin:.3rem 0 .8rem}
+.wrap{max-width:560px;margin:0 auto;padding:16px 16px 120px}
+.muted{color:var(--muted)}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--tape);outline-offset:2px}
+.btn{display:block;width:100%;border:0;border-radius:12px;padding:14px 16px;font-weight:700;font-size:1.05rem;background:var(--brand);color:var(--brand-ink)}
+.btn.secondary{background:var(--surface);color:var(--ink);border:2px solid var(--line)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:10px}
+.row>*{flex:1}
+input[type=text]{width:100%;font:inherit;font-size:1.1rem;padding:12px 14px;border-radius:10px;border:2px solid var(--line);background:var(--surface);color:var(--ink)}
+.choice{display:block;width:100%;text-align:left;background:var(--surface);border:2px solid var(--line);border-radius:12px;padding:12px 14px;margin:0 0 10px}
+.choice[aria-pressed="true"]{border-color:var(--brand);background:var(--brand-soft)}
+.choice b{display:block;font-size:1.05rem}
+.choice span{display:block;color:var(--muted);font-size:.95rem}
+section{margin:18px 0}
+/* top bar */
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--brand);color:var(--brand-ink);padding:10px 16px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--brand)}
+.bar .in{max-width:560px;margin:0 auto;display:flex;align-items:center;gap:12px}
+.bar .wk{font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:1.5rem;line-height:1}
+.bar .stat{margin-left:auto;text-align:right;font-size:.85rem;line-height:1.15}
+.bar .stat b{display:block;font-size:1.2rem}
+.slots{display:flex;gap:6px}
+.slot{width:18px;height:18px;border-radius:4px;border:2px solid var(--brand-ink);opacity:.9}
+.slot.on{background:var(--tape);border-color:var(--tape)}
+/* return labels: the signature element */
+.label{position:relative;background:var(--surface);border:2px solid var(--ink);border-radius:6px;margin:0 0 12px;padding:12px 14px 12px 64px;width:100%;text-align:left;display:block}
+.label::before{content:"";position:absolute;left:0;top:0;bottom:0;width:50px;border-right:2px dashed var(--line)}
+.label .em{position:absolute;left:0;top:50%;transform:translateY(-50%);width:50px;text-align:center;font-size:1.6rem}
+.label .top{display:flex;align-items:baseline;gap:8px}
+.label .val{margin-left:auto;font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:1.4rem}
+.label .cond{font-family:"Barlow",sans-serif;color:var(--muted);font-size:.93rem;margin:2px 0 6px}
+.tag{display:inline-block;font-size:.8rem;font-weight:700;padding:2px 8px;border-radius:4px;margin-right:6px}
+.tag.decay{background:var(--tape);color:var(--tape-ink)}
+.tag.flat{background:var(--brand-soft);color:var(--brand)}
+.tag.unk{background:var(--bad-soft);color:var(--bad)}
+.tag.ok{background:var(--good-soft);color:var(--good)}
+.label.done{border-style:dashed;opacity:.85}
+.label.done .val{text-decoration:none}
+.stamp{display:inline-block;margin-top:4px;font-weight:700;color:var(--good)}
+/* sheet */
+.scrim{position:fixed;inset:0;background:rgba(10,8,16,.5);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--bg);width:100%;max-width:560px;max-height:88vh;overflow:auto;border-radius:18px 18px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px))}
+.opt{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--surface);border:2px solid var(--line);border-radius:12px;padding:12px 14px;margin:0 0 10px}
+.opt .nm{font-weight:700}
+.opt .sub{font-size:.9rem;color:var(--muted)}
+.opt .net{margin-left:auto;font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:1.5rem;white-space:nowrap}
+.pos{color:var(--good)} .neg{color:var(--bad)}
+.note{border-left:4px solid var(--tape);background:var(--surface);padding:10px 12px;border-radius:0 8px 8px 0;margin:10px 0}
+.note.bad{border-color:var(--bad)} .note.good{border-color:var(--good)}
+/* event */
+.card{background:var(--surface);border:2px solid var(--ink);border-radius:8px;padding:18px}
+.coin{width:120px;height:120px;border-radius:50%;margin:10px auto 16px;display:grid;place-items:center;background:var(--tape);color:var(--tape-ink);font:800 1.3rem "Barlow Condensed",sans-serif;border:4px solid var(--ink)}
+.coin.spin{animation:spin .9s ease-out}
+@keyframes spin{from{transform:rotateY(0)}to{transform:rotateY(1440deg)}}
+@media (prefers-reduced-motion:reduce){.coin.spin{animation:none}}
+.ht{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.ht .h{border:2px solid var(--line);border-radius:10px;padding:10px;background:var(--bg);font-size:.95rem}
+.ht .h b{display:block;font-family:"Barlow Condensed",sans-serif;font-size:1.2rem}
+.foot{position:fixed;left:0;right:0;bottom:0;background:var(--bg);border-top:2px solid var(--line);padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));z-index:6}
+.foot .in{max-width:560px;margin:0 auto}
+.big{font:800 3.4rem/1 "Barlow Condensed",sans-serif}
+table{width:100%;border-collapse:collapse;font-size:.95rem}
+td,th{padding:7px 4px;border-bottom:1px solid var(--line);text-align:left}
+td.r,th.r{text-align:right}
+.scroll{overflow-x:auto}
+.linkish{background:none;border:0;color:var(--brand);text-decoration:underline;padding:0;font-weight:600}
+.lb input{width:100%;font:inherit;padding:6px 8px;border:2px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.proj h1{font-size:3.4rem}
+.proj .card{font-size:1.4rem}
+.proj .ht .h{font-size:1.2rem}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+// ---- Game data & pure logic (no DOM) ----
+const UPGRADE_COST = 40, FLAT_FEE = 45, SHARE = 0.20, CAPACITY = 2, WEEKS = 4, UNRESOLVED_PENALTY = 10, LANDFILL_FINE = 15;
+const CHANNELS = {
+  restock:   { label: 'Restock as new',     pct: 1.00, cost: 8  },
+  resale:    { label: 'Sell as open-box',   pct: 0.60, cost: 8  },
+  refurb:    { label: 'Refurbish and sell', pct: 0.85, cost: 20 },
+  liquidate: { label: 'Sell to a liquidator', pct: 0.25, cost: 3 },
+  donate:    { label: 'Donate',             pct: 0,    cost: 4  },
+  recycle:   { label: 'Recycle',            pct: 0,    cost: 6  },
+  landfill:  { label: 'Landfill',           pct: 0,    cost: 2  },
+};
+const ITEMS = [
+  { id:'laptop',  name:'Laptop', emoji:'💻', cat:'electronics', week:1, value:900, decay:120, cond:'Sealed box. Customer changed their mind.', channels:['restock','resale','liquidate'] },
+  { id:'phone',   name:'Smartphone', emoji:'📱', cat:'electronics', week:1, value:600, decay:100, cond:'Opened, used for two days. "Didn\u2019t like it."', channels:['resale','refurb','liquidate','recycle'] },
+  { id:'jacket',  name:'Winter jacket', emoji:'🧥', cat:'clothing', week:1, value:180, decay:30, cond:'Tags on. Wrong color.', channels:['restock','liquidate','donate'] },
+  { id:'dress',   name:'Party dress', emoji:'👗', cat:'clothing', week:1, value:220, decay:30, cond:'Worn once to a wedding. Tags cut off.', channels:['resale','liquidate','donate','landfill'], resaleLabel:'Sell as used' },
+  { id:'coffee',  name:'Coffee maker', emoji:'☕', cat:'home', week:1, value:80, decay:5, cond:'Customer says it won\u2019t turn on.', channels:['resale','refurb','recycle','landfill'], unknown:'coffee' },
+  { id:'case',    name:'Phone case', emoji:'🔲', cat:'accessories', week:1, value:12, decay:0, cond:'Unopened. Wrong phone model.', channels:['restock','donate','landfill'] },
+  { id:'bag',     name:'Designer handbag', emoji:'👜', cat:'clothing', week:2, value:1200, decay:60, cond:'Like new, in its dust bag.', channels:['restock','liquidate','recycle','landfill'], unknown:'bag' },
+  { id:'shoes',   name:'Running shoes', emoji:'👟', cat:'clothing', week:2, value:120, decay:20, cond:'Worn on one run. Wrong size.', channels:['resale','donate','landfill'], resaleLabel:'Sell as used' },
+  { id:'phones2', name:'Headphones', emoji:'🎧', cat:'electronics', week:2, value:300, decay:40, cond:'One ear cup is dead.', channels:['refurb','liquidate','recycle'] },
+  { id:'mat',     name:'Yoga mat', emoji:'🧘', cat:'home', week:2, value:40, decay:0, cond:'Used about ten times.', channels:['donate','recycle','landfill'] },
+];
+const EVENTS = [
+  { week:1, title:'Carrier strike', heads:'Trucks run on time. Nothing happens.', tails:'Trucks are stuck. Everything still in your warehouse loses one extra week of value.' },
+  { week:2, title:'New phone model launches', heads:'The launch is delayed. Nothing happens.', tails:'Electronics still in your warehouse lose 30% of their value.' },
+  { week:3, title:'The season ends', heads:'Cold weather hangs on. Nothing happens.', tails:'Clothing and shoes still in your warehouse lose half their value.' },
+  { week:4, title:'Landfill audit', heads:'The client skips the audit. Nothing happens.', tails:'The client fines you $15 for every item you sent to landfill.' },
+];
+function newGame(rand = Math.random) {
+  return {
+    team:'', contract:null, upgrade:null, week:1, phase:'setup', // setup | play | event | result | final
+    items: ITEMS.map(it => ({ id: it.id, value: it.value, status: it.week === 1 ? 'waiting' : 'future', processedWeek: null, channel: null })),
+    hidden: { coffee: rand() < 0.5 ? 'works' : 'broken', bag: rand() < 0.2 ? 'fake' : 'real' },
+    ledger: [], // {week, itemId, channel, recovery, income, cost, penalty, note}
+    events: [], // {week, result, note, amount}
+  };
+}
+const def = id => ITEMS.find(i => i.id === id);
+const known = (g, it) => !it.unknown || g.upgrade === 'tracking' ? (it.unknown ? g.hidden[it.unknown] : null) : null;
+function channelsFor(g, it) {
+  let ch = it.channels.slice();
+  if (g.upgrade !== 'bench') ch = ch.filter(c => c !== 'refurb');
+  const k = known(g, it);
+  if (k === 'broken') ch = ch.filter(c => c !== 'resale');
+  if (k === 'works') ch = ch.filter(c => c !== 'refurb' || g.upgrade === 'bench');
+  if (k === 'fake') ch = ch.filter(c => c === 'recycle' || c === 'landfill');
+  return ch;
+}
+function pctFor(g, c) {
+  let p = CHANNELS[c].pct;
+  if (g.upgrade === 'platform' && c === 'resale') p = 0.75;
+  if (g.upgrade === 'platform' && c === 'liquidate') p = 0.35;
+  return p;
+}
+function quote(g, itemId, c) { // what this choice is worth if the item is as it appears
+  const st = g.items.find(i => i.id === itemId);
+  const recovery = Math.round(st.value * pctFor(g, c));
+  const income = g.contract === 'flat' ? FLAT_FEE : Math.round(recovery * SHARE);
+  const cost = CHANNELS[c].cost;
+  return { recovery, income, cost, net: income - cost };
+}
+function process(g, itemId, c) {
+  const it = def(itemId), st = g.items.find(i => i.id === itemId);
+  let { recovery, income, cost } = quote(g, itemId, c);
+  let penalty = 0, note = '';
+  const truth = it.unknown ? g.hidden[it.unknown] : null;
+  if (truth === 'broken' && c === 'resale') { penalty = 40; recovery = 0; income = g.contract === 'flat' ? FLAT_FEE : 0; note = 'It really was broken. The buyer sent it back: you pay $40 in refunds and shipping.'; }
+  else if (truth === 'works' && it.unknown === 'coffee' && g.upgrade !== 'tracking') note = (c === 'resale' || c === 'refurb') ? 'Good news: it works fine. The customer just hadn\u2019t plugged it in properly.' : 'It actually worked fine. The customer just hadn\u2019t plugged it in properly.';
+  else if (truth === 'broken' && g.upgrade !== 'tracking') note = 'It really was broken.';
+  if (truth === 'fake' && (c === 'restock' || c === 'liquidate')) { penalty = 200; recovery = 0; income = g.contract === 'flat' ? FLAT_FEE : 0; note = 'It was a counterfeit. The customer kept the real bag. Selling a fake costs you a $200 fine.'; }
+  else if (truth === 'fake' && g.upgrade !== 'tracking') note = 'Lucky call: it was a counterfeit.';
+  else if (truth === 'real' && g.upgrade !== 'tracking' && (c === 'recycle' || c === 'landfill')) note = 'It was genuine. A $1,200 bag just left the building for nothing.';
+  st.status = 'done'; st.processedWeek = g.week; st.channel = c;
+  const row = { week: g.week, itemId, channel: c, recovery, income, cost, penalty, note };
+  g.ledger.push(row);
+  return row;
+}
+function undo(g, itemId) {
+  const st = g.items.find(i => i.id === itemId);
+  if (st.processedWeek !== g.week) return;
+  g.ledger = g.ledger.filter(r => !(r.itemId === itemId && r.week === g.week));
+  st.status = 'waiting'; st.processedWeek = null; st.channel = null;
+}
+const usedSlots = g => g.ledger.filter(r => r.week === g.week).length;
+function closeWeek(g) { // decay waiting items, then go to event
+  g.items.forEach(st => { if (st.status === 'waiting') st.value = Math.max(0, st.value - def(st.id).decay); });
+  g.phase = 'event';
+}
+function applyEvent(g, result) {
+  const ev = EVENTS[g.week - 1]; let note = ev.heads, amount = 0;
+  if (result === 'tails') {
+    note = ev.tails;
+    const waiting = g.items.filter(s => s.status === 'waiting');
+    if (g.week === 1) waiting.forEach(s => s.value = Math.max(0, s.value - def(s.id).decay));
+    if (g.week === 2) waiting.filter(s => def(s.id).cat === 'electronics').forEach(s => s.value = Math.round(s.value * 0.7));
+    if (g.week === 3) waiting.filter(s => def(s.id).cat === 'clothing').forEach(s => s.value = Math.round(s.value * 0.5));
+    if (g.week === 4) amount = -LANDFILL_FINE * g.ledger.filter(r => r.channel === 'landfill').length;
+  }
+  g.events.push({ week: g.week, result, note, amount });
+  if (g.week < WEEKS) { g.week++; g.items.forEach(st => { if (st.status === 'future' && def(st.id).week === g.week) st.status = 'waiting'; }); g.phase = 'result'; }
+  else g.phase = 'final';
+}
+function totals(g) {
+  const income = g.ledger.reduce((a, r) => a + r.income, 0), cost = g.ledger.reduce((a, r) => a + r.cost, 0);
+  const penalties = g.ledger.reduce((a, r) => a + r.penalty, 0), eventFines = -g.events.reduce((a, e) => a + e.amount, 0);
+  const unresolved = g.phase === 'final' ? g.items.filter(s => s.status !== 'done').length : 0;
+  const upgrade = g.upgrade ? UPGRADE_COST : 0;
+  const profit = income - cost - penalties - eventFines - unresolved * UNRESOLVED_PENALTY - upgrade;
+  return { income, cost, penalties, eventFines, unresolved, unresolvedCost: unresolved * UNRESOLVED_PENALTY, upgrade, profit,
+    clientRecovery: g.ledger.reduce((a, r) => a + r.recovery, 0), landfill: g.ledger.filter(r => r.channel === 'landfill').length };
+}
+// ---------- UI ----------
+const KEY='beat-the-clock-v1';
+let G=null, mode='team';
+const $app=document.getElementById('app');
+const money=n=>(n<0?'−$':'$')+Math.abs(Math.round(n)).toLocaleString('en-US');
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function save(){try{localStorage.setItem(KEY,JSON.stringify(G))}catch(e){}}
+function load(){try{const s=localStorage.getItem(KEY);return s?JSON.parse(s):null}catch(e){return null}}
+const UPGRADES={
+  tracking:{name:'Scanning system',desc:'Scan every item when it arrives. You see its true condition right away, so no surprises.'},
+  bench:{name:'Repair bench',desc:'Unlocks “Refurbish and sell”: fix items and sell them for 85% of their value.'},
+  platform:{name:'Resale website',desc:'Your own resale site: open-box and used items sell for 75% instead of 60%, liquidators pay 35% instead of 25%.'},
+};
+const CONTRACTS={
+  flat:{name:'Flat fee',desc:'The client pays you $45 for every item you process, whatever happens to it.'},
+  share:{name:'Revenue share',desc:'The client pays you 20% of whatever money you recover from each item.'},
+};
+function chLabel(it,c){return c==='resale'&&it.resaleLabel?it.resaleLabel:CHANNELS[c].label}
+
+function render(){
+  if(mode==='instructor') return renderInstructor();
+  if(!G) G=newGame();
+  ({setup:renderSetup,play:renderPlay,event:renderEvent,result:renderResult,final:renderFinal})[G.phase]();
+  save();
+}
+function topBar(){
+  const t=totals(G), used=usedSlots(G);
+  let slots=''; for(let i=0;i<CAPACITY;i++) slots+=`<span class="slot ${i<used?'on':''}"></span>`;
+  return `<div class="bar"><div class="in"><div><div class="wk">Week ${G.week} of 4</div><div class="slots" aria-label="${used} of ${CAPACITY} slots used">${slots}</div></div>
+  <div class="stat">${esc(G.team||'Your company')}<b>${money(t.profit)}</b></div></div></div>`;
+}
+
+// ---- setup
+function renderSetup(){
+  const pick=(group,key,obj)=>Object.entries(obj).map(([k,v])=>`<button class="choice" aria-pressed="${G[key]===k}" data-set="${key}" data-val="${k}"><b>${v.name}</b><span>${v.desc}</span></button>`).join('');
+  $app.innerHTML=`<div class="wrap">
+    <h1>Beat the Clock</h1>
+    <p>You run a company that handles returns for a big department store. Every week an item sits in your warehouse, it’s worth less. Process the right items, the right way, before the clock runs out.</p>
+    <section><h3>Your company name</h3><input type="text" id="team" maxlength="28" placeholder="e.g., Second Wind Returns" value="${esc(G.team)}"></section>
+    <section><h3>1. Pick your contract with the store</h3>${pick('c','contract',CONTRACTS)}</section>
+    <section><h3>2. Buy one upgrade ($40)</h3>${pick('u','upgrade',UPGRADES)}</section>
+    <button class="btn" id="go" ${G.contract&&G.upgrade?'':'disabled'}>Open the warehouse</button>
+    <p class="muted" style="margin-top:14px">Your choices are final once you open the warehouse. <button class="linkish" id="rules">How the game works</button></p>
+    <p class="muted"><button class="linkish" id="inst">Instructor screen</button></p>
+  </div>`;
+  $app.querySelectorAll('[data-set]').forEach(b=>b.onclick=()=>{G.team=document.getElementById('team').value;G[b.dataset.set]=b.dataset.val;render();});
+  document.getElementById('team').oninput=e=>{G.team=e.target.value;save();};
+  document.getElementById('go').onclick=()=>{G.team=document.getElementById('team').value.trim()||'Team';G.phase='play';window.scrollTo(0,0);render();};
+  document.getElementById('rules').onclick=showRules;
+  document.getElementById('inst').onclick=()=>{mode='instructor';render();};
+}
+function showRules(){
+  sheet(`<h2>How the game works</h2>
+  <p><b>1.</b> Returned items arrive at your warehouse. More arrive in week 2.</p>
+  <p><b>2.</b> You can process only <b>${CAPACITY} items a week</b>. Everything else waits and loses value.</p>
+  <p><b>3.</b> Tap an item to choose what happens to it. Each option shows what you earn.</p>
+  <p><b>4.</b> At the end of each week your instructor flips a coin for an event. Tap what the coin showed.</p>
+  <p><b>5.</b> After 4 weeks, the company with the most profit wins. Items you never processed cost you $${10} each. We also count how many items went to landfill.</p>
+  <button class="btn" data-close>Got it</button>`);
+}
+function sheet(html){
+  const s=document.createElement('div');s.className='scrim';s.innerHTML=`<div class="sheet" role="dialog" aria-modal="true">${html}</div>`;
+  s.addEventListener('click',e=>{if(e.target===s||e.target.closest('[data-close]'))s.remove();});
+  document.body.appendChild(s); const f=s.querySelector('button'); if(f) f.focus(); return s;
+}
+
+// ---- play
+function labelHTML(st){
+  const it=def(st.id), k=known(G,it); let tags='';
+  if(st.status==='done'){const r=G.ledger.find(x=>x.itemId===st.id);
+    return `<div class="label done"><span class="em" aria-hidden="true">${it.emoji}</span><div class="top"><h3>${it.name}</h3><span class="val">${money(r.income-r.cost-r.penalty)}</span></div>
+    <div class="cond">${chLabel(it,st.channel)}${st.processedWeek===G.week?'':` · week ${st.processedWeek}`}</div>${st.processedWeek===G.week&&G.phase==='play'?`<button class="linkish" data-undo="${st.id}">Undo</button>`:''}</div>`;}
+  tags+= it.decay? `<span class="tag decay">Loses $${it.decay}/week</span>` : `<span class="tag flat">Holds its value</span>`;
+  if(it.unknown && !k) tags+=`<span class="tag unk">${it.unknown==='bag'?'Authentic? Unknown':'Condition unknown'}</span>`;
+  if(k==='works') tags+=`<span class="tag ok">Scanned: works fine</span>`;
+  if(k==='broken') tags+=`<span class="tag unk">Scanned: broken</span>`;
+  if(k==='real') tags+=`<span class="tag ok">Scanned: authentic</span>`;
+  if(k==='fake') tags+=`<span class="tag unk">Scanned: counterfeit</span>`;
+  return `<button class="label" data-item="${st.id}"><span class="em" aria-hidden="true">${it.emoji}</span>
+    <div class="top"><h3>${it.name}</h3><span class="val">${money(st.value)}</span></div>
+    <div class="cond">${it.cond}</div>${tags}</button>`;
+}
+function renderPlay(){
+  const waiting=G.items.filter(s=>s.status==='waiting'), doneNow=G.items.filter(s=>s.status==='done'&&s.processedWeek===G.week);
+  const earlier=G.items.filter(s=>s.status==='done'&&s.processedWeek<G.week), used=usedSlots(G);
+  const arrived=G.week===2?`<div class="note"><b>Holiday surge:</b> four more returns just arrived.</div>`:'';
+  $app.innerHTML=topBar()+`<div class="wrap">
+    ${G.week===1?`<p class="muted">Tap an item to decide what happens to it. You can process ${CAPACITY} this week.</p>`:''}${arrived}
+    <section><h2>In your warehouse</h2>${waiting.length?waiting.map(labelHTML).join(''):'<p class="muted">Empty. Nice work.</p>'}</section>
+    ${doneNow.length?`<section><h2>Processed this week</h2>${doneNow.map(labelHTML).join('')}</section>`:''}
+    ${earlier.length?`<section><h2>Earlier weeks</h2>${earlier.map(labelHTML).join('')}</section>`:''}
+    <p><button class="linkish" id="rules">How the game works</button></p>
+  </div>
+  <div class="foot"><div class="in"><button class="btn" id="close">Finish week ${G.week} (${used} of ${CAPACITY} slots used)</button></div></div>`;
+  $app.querySelectorAll('[data-item]').forEach(b=>b.onclick=()=>chooseFor(b.dataset.item));
+  $app.querySelectorAll('[data-undo]').forEach(b=>b.onclick=()=>{undo(G,b.dataset.undo);render();});
+  document.getElementById('rules').onclick=showRules;
+  document.getElementById('close').onclick=()=>{
+    const left=waiting.length, free=CAPACITY-used;
+    const go=()=>{closeWeek(G);window.scrollTo(0,0);render();};
+    if(free>0&&left>0){const s=sheet(`<h2>Finish the week?</h2><p>You still have ${free} free slot${free>1?'s':''} and ${left} item${left>1?'s':''} waiting. Unused slots don’t carry over.</p><div class="row"><button class="btn secondary" data-close>Keep working</button><button class="btn" id="yes">Finish week</button></div>`);s.querySelector('#yes').onclick=()=>{s.remove();go();};}
+    else go();
+  };
+}
+function chooseFor(id){
+  const it=def(id), st=G.items.find(s=>s.id===id);
+  if(usedSlots(G)>=CAPACITY){sheet(`<h2>No slots left</h2><p>Your warehouse can process ${CAPACITY} items a week. Undo one, or finish the week.</p><button class="btn" data-close>OK</button>`);return;}
+  const k=known(G,it), unk=it.unknown&&!k;
+  const opts=channelsFor(G,it).map(c=>{const q=quote(G,id,c);
+    const sub=CHANNELS[c].pct?`Recovers ${money(q.recovery)} for the store · costs you ${money(q.cost)}`:`Recovers nothing · costs you ${money(q.cost)}`;
+    return `<button class="opt" data-ch="${c}"><div><div class="nm">${chLabel(it,c)}</div><div class="sub">${sub}</div></div><div class="net ${q.net>=0?'pos':'neg'}">${q.net>=0?'+':''}${money(q.net)}</div></button>`;}).join('');
+  const warn=unk?`<div class="note bad">${it.unknown==='bag'?'You can’t tell if this bag is genuine. If you sell a counterfeit, the store fines you $200.':'You can’t tell if it’s really broken. If you sell it and it doesn’t work, the buyer returns it and you pay $40.'}</div>`:'';
+  const s=sheet(`<h2>${it.emoji} ${it.name} · ${money(st.value)}</h2><p class="muted">${it.cond}</p>${warn}
+    <p class="muted">Your earnings for each option${G.contract==='flat'?' (flat $45 fee, minus processing cost)':' (20% of what you recover, minus processing cost)'}:</p>
+    ${opts}<button class="btn secondary" data-close>Not now</button>`);
+  s.querySelectorAll('[data-ch]').forEach(b=>b.onclick=()=>{
+    const row=process(G,id,b.dataset.ch); save();
+    if(row.note){s.querySelector('.sheet').innerHTML=`<h2>${it.emoji} ${it.name}</h2><div class="coin spin" aria-hidden="true">${({broken:'Broken',works:'Works',fake:'Fake',real:'Genuine'})[G.hidden[it.unknown]]||'?'}</div><div class="note ${row.penalty?'bad':'good'}">${row.note}</div><p>You earn <b>${money(row.income-row.cost-row.penalty)}</b> on this item.</p><button class="btn" data-close>OK</button>`;
+      s.addEventListener('click',e=>{if(e.target.closest('[data-close]'))render();});}
+    else {s.remove();render();}
+  });
+}
+
+// ---- event
+function renderEvent(){
+  const ev=EVENTS[G.week-1];
+  $app.innerHTML=topBar()+`<div class="wrap">
+    <h2>End of week ${G.week}</h2><p class="muted">Waiting items just lost a week of value. Now your instructor flips the coin.</p>
+    <div class="card"><h2>${ev.title}</h2><div class="coin" aria-hidden="true">Flip!</div>
+    <div class="ht"><div class="h"><b>Heads</b>${ev.heads}</div><div class="h"><b>Tails</b>${ev.tails}</div></div></div>
+    <p style="margin-top:16px"><b>What did the coin show?</b></p>
+    <div class="row"><button class="btn" data-r="heads">Heads</button><button class="btn" data-r="tails">Tails</button></div>
+  </div>`;
+  $app.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{
+    const s=sheet(`<h2>Tap “${b.dataset.r==='heads'?'Heads':'Tails'}”?</h2><p>Make sure it matches the instructor’s coin. You can’t change it later.</p><div class="row"><button class="btn secondary" data-close>Go back</button><button class="btn" id="yes">Confirm</button></div>`);
+    s.querySelector('#yes').onclick=()=>{s.remove();applyEvent(G,b.dataset.r);window.scrollTo(0,0);render();};
+  });
+}
+function renderResult(){
+  const e=G.events[G.events.length-1], ev=EVENTS[e.week-1];
+  $app.innerHTML=topBar()+`<div class="wrap">
+    <h2>${ev.title}: ${e.result==='heads'?'Heads':'Tails'}</h2>
+    <div class="note ${e.result==='tails'?'bad':'good'}">${e.note}</div>
+    ${G.week===2?'<p>A holiday surge of returns is on its way.</p>':''}
+    <button class="btn" id="next">Start week ${G.week}</button></div>`;
+  document.getElementById('next').onclick=()=>{G.phase='play';window.scrollTo(0,0);render();};
+}
+function renderFinal(){
+  const t=totals(G), e=G.events[G.events.length-1];
+  const line=(a,b,cls='')=>`<tr><td>${a}</td><td class="r ${cls}">${b}</td></tr>`;
+  $app.innerHTML=`<div class="wrap">
+    <h2>Landfill audit: ${e.result==='heads'?'Heads':'Tails'}</h2><div class="note ${e.amount?'bad':'good'}">${e.note}</div>
+    <h1>${esc(G.team)}</h1><p class="muted">${CONTRACTS[G.contract].name} · ${UPGRADES[G.upgrade].name}</p>
+    <div class="card" style="text-align:center"><div class="muted">Final profit</div><div class="big">${money(t.profit)}</div>
+      <div class="row" style="margin-top:12px"><div><div class="muted">Recovered for the store</div><b>${money(t.clientRecovery)}</b></div><div><div class="muted">Sent to landfill</div><b>${t.landfill} item${t.landfill===1?'':'s'}</b></div></div></div>
+    <section><h3>Where the money went</h3><table>
+      ${line(G.contract==='flat'?'Fees from the store':'Your 20% share',money(t.income))}
+      ${line('Processing costs',money(-t.cost))}
+      ${t.penalties?line('Penalties (bad sales)',money(-t.penalties),'neg'):''}
+      ${t.eventFines?line('Landfill fine',money(-t.eventFines),'neg'):''}
+      ${t.unresolved?line(`${t.unresolved} item${t.unresolved>1?'s':''} never processed`,money(-t.unresolvedCost),'neg'):''}
+      ${line('Upgrade',money(-t.upgrade))}
+      ${line('<b>Profit</b>','<b>'+money(t.profit)+'</b>')}
+    </table></section>
+    <section><h3>What happened to each item</h3><div class="scroll"><table><tr><th>Item</th><th>Week</th><th>Decision</th><th class="r">You earned</th></tr>
+      ${G.items.map(s=>{const it=def(s.id),r=G.ledger.find(x=>x.itemId===s.id);return r?`<tr><td>${it.emoji} ${it.name}</td><td>${r.week}</td><td>${chLabel(it,r.channel)}</td><td class="r">${money(r.income-r.cost-r.penalty)}</td></tr>`:`<tr><td>${it.emoji} ${it.name}</td><td>–</td><td class="neg">Never processed</td><td class="r neg">${money(-10)}</td></tr>`}).join('')}
+    </table></div></section>
+    <p class="muted">Report your final profit, store recovery, and landfill count to your instructor.</p>
+    <button class="btn secondary" id="again">Start a new game on this phone</button></div>`;
+  document.getElementById('again').onclick=()=>{const s=sheet(`<h2>Start over?</h2><p>This erases this team’s game.</p><div class="row"><button class="btn secondary" data-close>Cancel</button><button class="btn" id="yes">Start over</button></div>`);s.querySelector('#yes').onclick=()=>{s.remove();G=newGame();window.scrollTo(0,0);render();};};
+}
+
+// ---- instructor screen (projector)
+let I=null; const IKEY='beat-the-clock-instructor-v1';
+function iload(){try{return JSON.parse(localStorage.getItem(IKEY))||null}catch(e){return null}}
+function isave(){try{localStorage.setItem(IKEY,JSON.stringify(I))}catch(e){}}
+function renderInstructor(){
+  if(!I) I=iload()||{ev:0,flip:null,rows:Array.from({length:8},()=>({team:'',profit:'',recovery:'',landfill:''}))};
+  const ev=EVENTS[I.ev];
+  const sorted=I.rows.map((r,i)=>({...r,i})).filter(r=>r.team&&r.profit!=='').sort((a,b)=>Number(b.profit)-Number(a.profit));
+  $app.innerHTML=`<div class="wrap proj" style="max-width:900px">
+    <div class="row" style="align-items:center"><h1 style="flex:3">Week ${ev.week} event</h1><button class="btn secondary" style="flex:1" id="back">Team view</button></div>
+    <div class="card"><h2>${ev.title}</h2>
+      <div class="coin ${I.flip?'':''}" id="coin">${I.flip?(I.flip==='heads'?'Heads':'Tails'):'Flip!'}</div>
+      <div class="ht"><div class="h" style="${I.flip==='heads'?'border-color:var(--good)':''}"><b>Heads</b>${ev.heads}</div><div class="h" style="${I.flip==='tails'?'border-color:var(--bad)':''}"><b>Tails</b>${ev.tails}</div></div>
+      <div class="row" style="margin-top:14px"><button class="btn secondary" id="vflip">No coin? Flip here</button><button class="btn secondary" id="clr">Clear</button></div>
+    </div>
+    <div class="row" style="margin:14px 0"><button class="btn secondary" id="prev" ${I.ev===0?'disabled':''}>Previous event</button><button class="btn" id="nxt" ${I.ev===3?'disabled':''}>Next event</button></div>
+    <section><h2>Leaderboard</h2><p class="muted">Type in each team’s numbers from their phones. Ranked by profit.</p>
+    <div class="scroll lb"><table><tr><th>Company</th><th>Profit</th><th>Recovered for store</th><th>Landfill items</th></tr>
+      ${I.rows.map((r,i)=>`<tr><td><input data-i="${i}" data-k="team" value="${esc(r.team)}" aria-label="Team ${i+1} name"></td><td><input data-i="${i}" data-k="profit" inputmode="numeric" value="${esc(r.profit)}" aria-label="Team ${i+1} profit"></td><td><input data-i="${i}" data-k="recovery" inputmode="numeric" value="${esc(r.recovery)}" aria-label="Team ${i+1} recovery"></td><td><input data-i="${i}" data-k="landfill" inputmode="numeric" value="${esc(r.landfill)}" aria-label="Team ${i+1} landfill"></td></tr>`).join('')}
+    </table></div>
+    <div id="rank">${sorted.length?`<table style="margin-top:14px;font-size:1.3rem">${sorted.map((r,n)=>`<tr><td><b>${n+1}.</b> ${esc(r.team)}</td><td class="r"><b>${money(Number(r.profit))}</b></td><td class="r muted">${r.landfill!==''?esc(r.landfill)+' landfilled':''}</td></tr>`).join('')}</table>`:''}</div>
+    <button class="btn secondary" style="margin-top:12px" id="update">Update ranking</button>
+    <button class="btn secondary" style="margin-top:10px" id="wipe">Clear leaderboard</button></section>
+  </div>`;
+  const re=()=>{isave();renderInstructor();};
+  document.getElementById('back').onclick=()=>{mode='team';render();};
+  document.getElementById('prev').onclick=()=>{I.ev--;I.flip=null;re();};
+  document.getElementById('nxt').onclick=()=>{I.ev++;I.flip=null;re();};
+  document.getElementById('clr').onclick=()=>{I.flip=null;re();};
+  document.getElementById('vflip').onclick=()=>{I.flip=Math.random()<.5?'heads':'tails';isave();renderInstructor();document.getElementById('coin').classList.add('spin');};
+  $app.querySelectorAll('.lb input').forEach(inp=>inp.oninput=()=>{I.rows[inp.dataset.i][inp.dataset.k]=inp.value;isave();});
+  document.getElementById('update').onclick=re;
+  document.getElementById('wipe').onclick=()=>{const s=sheet(`<h2>Clear the leaderboard?</h2><div class="row"><button class="btn secondary" data-close>Cancel</button><button class="btn" id="yes">Clear</button></div>`);s.querySelector('#yes').onclick=()=>{s.remove();I.rows.forEach(r=>{r.team='';r.profit='';r.recovery='';r.landfill='';});re();};};
+}
+
+G=load(); if(location.hash==='#instructor') mode='instructor';
+render();
+</script></body></html>
